@@ -1,6 +1,7 @@
 package com.example.ankit.attendanceclient;
 
 
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -39,6 +40,8 @@ import LocationTracking.LocationTrack;
 import SessionHandler.SaveAttendanceContext;
 import SessionHandler.SaveSharedPreference;
 
+import static NotificationChannel.App.CHANNEL_1;
+
 
 public class LocationFragment extends Fragment {
 
@@ -73,7 +76,6 @@ public class LocationFragment extends Fragment {
     public LocationFragment() {
         // Required empty public constructor
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -149,7 +151,7 @@ public class LocationFragment extends Fragment {
 
                             // mark first attendance
                             SaveAttendanceContext.setFirstAttendanceStatus(getContext(), true, markingDay);
-                            // TODO : Mark first attendance here
+                            // TODO : check in out and then mark into DB
 
                             Log.d(TAG, "marking first attendance");
                             params.put("eid", SaveSharedPreference.getUserInfo(getContext()));
@@ -186,7 +188,6 @@ public class LocationFragment extends Fragment {
                                         // TODO : update the DB
 
 
-
                                         lastLatitude = currLatitude;
                                         lastLongitude = currLongitude;
                                         Log.d(TAG, currLatitude + " " + currLongitude);
@@ -199,7 +200,7 @@ public class LocationFragment extends Fragment {
                                         updateIntoServer();
 
                                         Log.d(TAG, "updated in server");
-                                        
+
                                     }
 
                                 } else {    // out
@@ -298,19 +299,34 @@ public class LocationFragment extends Fragment {
         openApp.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), 0, openApp, 0);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getContext())
-                .setSmallIcon(R.drawable.ic_my_location_black_24dp)
-                .setContentTitle("Attendance Tracking System")
-                .setContentText("Your Attendance Tracking has started")
-                .setAutoCancel(false)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            Notification notification = new NotificationCompat.Builder(getContext(), CHANNEL_1)
+                    .setContentTitle("Attendance Tracking System")
+                    .setContentText("Attendance marking started")
+                    .setAutoCancel(false)
+                    .setSmallIcon(R.drawable.ic_my_location_black_24dp)
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+            notificationManager.notify(1, notification);
+
+        } else {
+            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getContext())
+                    .setSmallIcon(R.drawable.ic_my_location_black_24dp)
+                    .setContentTitle("Attendance Tracking System")
+                    .setContentText("Your Attendance Tracking has started")
+                    .setAutoCancel(false)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setContentIntent(pendingIntent)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-        notificationManager.notify(1, mBuilder.build());
-
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+            notificationManager.notify(1, mBuilder.build());
+        }
     }
 
     private void setUserOutNotification() {
@@ -319,18 +335,34 @@ public class LocationFragment extends Fragment {
         openApp.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), 0, openApp, 0);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getContext())
-                .setSmallIcon(R.drawable.ic_warning_black_24dp)
-                .setContentTitle("Attendance Tracking System")
-                .setContentText("You are out of company's premises!")
-                .setAutoCancel(true)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-        notificationManager.notify(5, mBuilder.build());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
+            Notification notification = new NotificationCompat.Builder(getContext(), CHANNEL_1)
+                    .setContentTitle("Attendance Tracking System")
+                    .setContentText("You are out of company's premises!")
+                    .setAutoCancel(false)
+                    .setSmallIcon(R.drawable.ic_warning_black_24dp)
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+            notificationManager.notify(1, notification);
+
+        } else {
+            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getContext())
+                    .setSmallIcon(R.drawable.ic_warning_black_24dp)
+                    .setContentTitle("Attendance Tracking System")
+                    .setContentText("You are out of company's premises!")
+                    .setAutoCancel(false)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setContentIntent(pendingIntent)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+            notificationManager.notify(1, mBuilder.build());
+        }
     }
 
 
@@ -347,7 +379,7 @@ public class LocationFragment extends Fragment {
 
 
                 Log.d(TAG, " successfully marked ");
-                processJSONResponse(response);
+                processJSONResponseInsert(response);
 
             }
 
@@ -403,7 +435,7 @@ public class LocationFragment extends Fragment {
 
     }
 
-    private void processJSONResponse(String response) {
+    private void processJSONResponseInsert(String response) {
 
         String serverResponse;
         try {
@@ -411,10 +443,10 @@ public class LocationFragment extends Fragment {
 
             serverResponse = jsonObject.get("response").toString();
 
-            if (1==Integer.parseInt(serverResponse)) {
+            if (1 == Integer.parseInt(serverResponse)) {
                 createNotification();
-            }else{
-                Toast.makeText(getContext(),"Failed to mark attendance",Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to mark attendance", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
 
@@ -429,10 +461,8 @@ public class LocationFragment extends Fragment {
 
             serverResponse = jsonObject.get("response").toString();
 
-            if (1!=Integer.parseInt(serverResponse)) {
-                createNotification();
-            }else{
-                Toast.makeText(getContext(),"Failed to mark attendance",Toast.LENGTH_LONG).show();
+            if (1 != Integer.parseInt(serverResponse)) {
+                setUserOutNotification();
             }
         } catch (Exception e) {
 

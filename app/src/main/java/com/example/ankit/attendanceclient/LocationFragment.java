@@ -27,6 +27,8 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
+import org.json.JSONObject;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,9 +37,12 @@ import java.util.concurrent.TimeUnit;
 import LocationTracking.GeoFence;
 import LocationTracking.LocationTrack;
 import SessionHandler.SaveAttendanceContext;
+import SessionHandler.SaveSharedPreference;
 
 
 public class LocationFragment extends Fragment {
+
+    public static final String TAG = "LocationFragment";
 
     GeoFence geoFence;
 
@@ -49,6 +54,7 @@ public class LocationFragment extends Fragment {
 
     ProgressDialog progressDialog;
     RequestParams params = new RequestParams();
+    RequestParams updateparams = new RequestParams();
 
     // thread service
     ScheduledExecutorService getLocationServiceBackground;
@@ -60,6 +66,8 @@ public class LocationFragment extends Fragment {
     double currLongitude;
     double lastLatitude = 0.0;
     double lastLongitude = 0.0;
+
+    int outStatus;
 
 
     public LocationFragment() {
@@ -100,6 +108,16 @@ public class LocationFragment extends Fragment {
         locBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                NavigationActivity nava=new NavigationActivity();
+//                nava.serviceInNav(true);
+
+
+                // TODO : check if todays day and marking day --- if same (user already marked) else (USER MARKS)
+
+//                if(true){
+//                    Log.d(TAG, "user already marked");
+//                    return;
+//                }
 
                 locationTrack = new LocationTrack(getContext());
 
@@ -109,7 +127,7 @@ public class LocationFragment extends Fragment {
                     double latitude = locationTrack.getLatitude();
                     double longitude = locationTrack.getLongitude();
 
-                    if (latitude == 0.0 && longitude == 0.0) {  // Failed
+                    if (latitude == -1 && longitude == -1) {  // Failed
                         Toast.makeText(getActivity(), "Retriving GPS signal failed", Toast.LENGTH_SHORT).show();
                     } else {    // Success
 
@@ -133,12 +151,19 @@ public class LocationFragment extends Fragment {
                             SaveAttendanceContext.setFirstAttendanceStatus(getContext(), true, markingDay);
                             // TODO : Mark first attendance here
 
+                            Log.d(TAG, "marking first attendance");
+                            params.put("eid", SaveSharedPreference.getUserInfo(getContext()));
+                            params.put("latitude", Double.toString(latitude));
+                            params.put("longitude", Double.toString(longitude));
+
+                            insertIntoServer();
+
                         }
 
                         boolean test5 = SaveAttendanceContext.getFirstAttendanceStatus(getContext());
                         String test6 = SaveAttendanceContext.getMarkedFor(getContext());
-                        Log.d("testtest", Boolean.toString(test5));
-                        Log.d("testtest", test6);
+                        Log.d(TAG, Boolean.toString(test5));
+                        Log.d(TAG, test6);
 
 
                         // Start Background Service
@@ -154,20 +179,38 @@ public class LocationFragment extends Fragment {
 
                                     if (currLatitude == lastLatitude && currLongitude == lastLongitude) {   // user at same place
                                         // TODO : do not update into DB
-                                        Log.d("loctrack", "same place");
+                                        Log.d(TAG, "same place");
+
+
                                     } else {    // user moved
                                         // TODO : update the DB
+
+
+
                                         lastLatitude = currLatitude;
                                         lastLongitude = currLongitude;
-                                        Log.d("loctrack", currLatitude + " " + currLongitude);
+                                        Log.d(TAG, currLatitude + " " + currLongitude);
+
+                                        updateparams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
+                                        updateparams.put("latitude", Double.toString(lastLatitude));
+                                        updateparams.put("longitude", Double.toString(lastLongitude));
+                                        // TODO : send duration
+
+                                        updateIntoServer();
+
+                                        Log.d(TAG, "updated in server");
+                                        
                                     }
 
                                 } else {    // out
 
                                     // TODO : set counter_out++ LIMIT 3 ;
 
+                                    outStatus = SaveAttendanceContext.getOutStatus(getContext());
+                                    Log.d(TAG, "outstatus: " + outStatus);
 
-                                    Log.d("isout", "out");
+
+                                    Log.d(TAG, "out");
                                     Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                         vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -177,11 +220,19 @@ public class LocationFragment extends Fragment {
                                     }
                                     setUserOutNotification();
 
+
+                                    outStatus += 1;
+                                    SaveAttendanceContext.updateOUTStatus(getContext(), outStatus);
+                                    if (outStatus >= 3) {
+                                        outStatus = 3;
+                                        forceMarkOUT();
+                                    }
                                 }
 
 
                             }
                         }, 1, 3, TimeUnit.SECONDS);
+
 
 //                    createNotification();
 
@@ -191,6 +242,7 @@ public class LocationFragment extends Fragment {
                     locationTrack.showSettingsAlert();
                 }
             }
+
         });
 
 
@@ -208,12 +260,35 @@ public class LocationFragment extends Fragment {
 
                 // cancel service thread
                 future.cancel(true);
-                Log.d("loctrack", "stopped");
+                Log.d(TAG, "stopped");
 
-                // TODO : mark outtime in DB if clicked by user
+                // get outStatus and update to DB
+                Log.d(TAG, "outs :" + outStatus);
+                // TODO : mark outTime and outStatus in DB if clicked by user
 
+                // reset outStatus to 0
+                SaveAttendanceContext.updateOUTStatus(getContext(), 0);
+
+                // Stopping loaction listener
+                locationTrack.stopListener();
             }
         });
+
+    }
+
+    private void forceMarkOUT() {
+
+        String markingDay = SaveAttendanceContext.getTodaysDay(getContext());
+        SaveAttendanceContext.setFirstAttendanceStatus(getContext(), false, markingDay);
+
+//        stopLocBtn.setVisibility(View.INVISIBLE);
+//        locBtn.setVisibility(View.VISIBLE);
+//        attendancePopText.setText("Attendance Tracking Stopped");
+
+        future.cancel(true);
+        Log.d(TAG, "stopped by force");
+
+        locationTrack.stopListener();
 
     }
 
@@ -259,24 +334,26 @@ public class LocationFragment extends Fragment {
     }
 
 
-    public void makeHTTPCall() {
-        progressDialog.setMessage("Checking location");
+    public void insertIntoServer() {
+        progressDialog.setMessage("Marking Attendance");
         progressDialog.show();
         AsyncHttpClient client = new AsyncHttpClient();
-//        String url = "http://jws-app-jspserver.7e14.starter-us-west-2.openshiftapps.com/checkInOut.jsp";
-        String url = "http://192.168.43.237:8080/Project_Server/checkInOut.jsp";
+        String url = SaveSharedPreference.getServerURL(getContext()) + "/InsertAttendanceDetails";
         client.post(url, params, new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(String response) {
                 progressDialog.hide();
 
+
+                Log.d(TAG, " successfully marked ");
+                processJSONResponse(response);
+
             }
 
             @Override
             public void onFailure(int statusCode, Throwable error, String content) {
                 progressDialog.hide();
-                TRACK_ON = false;
 
                 if (statusCode == 404) {
                     Toast.makeText(getContext(), "404 error", Toast.LENGTH_SHORT).show();
@@ -291,6 +368,75 @@ public class LocationFragment extends Fragment {
 
         });
 
+    }
+
+    public void updateIntoServer() {
+        AsyncHttpClient client = new AsyncHttpClient();
+        String url = SaveSharedPreference.getServerURL(getContext()) + "/UpdateAttendance";
+        client.post(url, updateparams, new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(String response) {
+
+
+                Log.d(TAG, " successfully marked ");
+                processJSONResponseUpdate(response);
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Throwable error, String content) {
+                progressDialog.hide();
+
+                if (statusCode == 404) {
+                    Toast.makeText(getContext(), "404 error", Toast.LENGTH_SHORT).show();
+                } else if (statusCode == 500) {
+                    Toast.makeText(getContext(), "server side error", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Heavy Error", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+
+
+        });
+
+    }
+
+    private void processJSONResponse(String response) {
+
+        String serverResponse;
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+
+            serverResponse = jsonObject.get("response").toString();
+
+            if (1==Integer.parseInt(serverResponse)) {
+                createNotification();
+            }else{
+                Toast.makeText(getContext(),"Failed to mark attendance",Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    private void processJSONResponseUpdate(String response) {
+
+        String serverResponse;
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+
+            serverResponse = jsonObject.get("response").toString();
+
+            if (1!=Integer.parseInt(serverResponse)) {
+                createNotification();
+            }else{
+                Toast.makeText(getContext(),"Failed to mark attendance",Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+
+        }
     }
 
 }

@@ -12,5 +12,6 @@ public class PreferenceUtility {
     // Attendance control BIT's
     public static final String FIRST_ATTENDANCE = "false";
     public static final String MARKING_DAY = "curr_date";
+    public static final String OUT_STATUS = "0";
 
 }

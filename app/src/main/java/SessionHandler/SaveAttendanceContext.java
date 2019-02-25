@@ -7,6 +7,7 @@ import android.text.format.DateFormat;
 
 import static SessionHandler.PreferenceUtility.FIRST_ATTENDANCE;
 import static SessionHandler.PreferenceUtility.MARKING_DAY;
+import static SessionHandler.PreferenceUtility.OUT_STATUS;
 
 import java.util.Date;
 
@@ -31,10 +32,20 @@ public class SaveAttendanceContext {
         return getPreferences(context).getString(MARKING_DAY,"null");
     }
 
+    public static int getOutStatus(Context context){
+        return getPreferences(context).getInt(OUT_STATUS,0);
+    }
+
     public static void setFirstAttendanceStatus(Context context, boolean firstAttendance,String curr_date) {
         SharedPreferences.Editor editor = getPreferences(context).edit();
         editor.putBoolean(FIRST_ATTENDANCE, firstAttendance);
         editor.putString(MARKING_DAY, curr_date);
+        editor.apply();
+    }
+
+    public static void updateOUTStatus(Context context,int out){
+        SharedPreferences.Editor editor= getPreferences(context).edit();
+        editor.putInt(OUT_STATUS,out);
         editor.apply();
     }
 

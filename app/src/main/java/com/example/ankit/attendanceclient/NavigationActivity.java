@@ -19,10 +19,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import SessionHandler.SaveSharedPreference;
 
 public class NavigationActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    public static final String TAG = "NavActivity";
+
+    //test
+    private static boolean RUN_THREAD = false;// thread service
+
 
 
     TextView navUsernameText;
@@ -96,17 +106,20 @@ public class NavigationActivity extends AppCompatActivity
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.location_item:
-                fragment = new LocationFragment();
-                break;
+//            case R.id.location_item:
+//                fragment = new LocationFragment();
+//                break;
             case R.id.profile_item:
                 fragment = new ProfileFragment();
                 break;
             case R.id.logout_item:
                 logoutBox();
                 break;
-            default:
+            case R.id.homepage_item:
                 fragment = new HomepageFragment();
+                break;
+            default:
+                fragment = new LocationFragment();
                 break;
         }
 
@@ -157,6 +170,30 @@ public class NavigationActivity extends AppCompatActivity
 
     public void setActionBarTitle(String title) {
         getSupportActionBar().setTitle(title);
+    }
+
+
+
+
+    public static void serviceInNav(boolean runThread) {
+        RUN_THREAD = runThread;
+        ScheduledExecutorService getLocationServiceBackground=null;
+        // to restart thread
+        ScheduledFuture<?> future;
+        if (RUN_THREAD) {
+            // start background service
+            future=getLocationServiceBackground.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+
+                    Log.d(TAG, "inside run");
+
+                }
+            },1,3,TimeUnit.SECONDS);
+
+        } else {
+            // dont
+        }
     }
 
 }

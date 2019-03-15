@@ -8,7 +8,7 @@ import android.os.Build;
 public class App extends Application {
 
     public static final String CHANNEL_1="Attendance channel";
-    public static final String CHANNEL_2="Test channel";
+    public static final String CHANNEL_2="Background channel";
 
     @Override
     public void onCreate() {
@@ -28,17 +28,17 @@ public class App extends Application {
             serviceChannel.setDescription("Background Service");
 
 
-            NotificationChannel outChannel=new NotificationChannel(
+            NotificationChannel backgroundChannel=new NotificationChannel(
                     CHANNEL_2,
-                    "test Channel",
+                    "Attendance Background Service",
                     NotificationManager.IMPORTANCE_DEFAULT
             );
-            outChannel.setDescription("test");
+            backgroundChannel.setDescription("Attendance Background Running Process");
 
 
             NotificationManager manager=getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
-            manager.createNotificationChannel(outChannel);
+            manager.createNotificationChannel(backgroundChannel);
         }
 
     }

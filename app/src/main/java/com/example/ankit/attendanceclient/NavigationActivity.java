@@ -75,9 +75,9 @@ public class NavigationActivity extends AppCompatActivity
 
 
 
-
+        // set homepage fragment
         FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
-        tx.replace(R.id.screen_area, new HomepageFragment());
+        tx.replace(R.id.screen_area, new LocationFragment());
         tx.commit();
     }
 

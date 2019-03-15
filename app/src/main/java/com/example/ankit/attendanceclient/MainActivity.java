@@ -119,13 +119,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        try {
-            saveLogData(getApplicationContext());
-            Log.d(TAG, "DONE");
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.d(TAG, "ERROR");
-        }
 
 
     } // end onCreate
@@ -182,12 +175,10 @@ public class MainActivity extends AppCompatActivity {
             validate = Integer.parseInt(loginJO.get("loginverified").toString());
             loginstatus = Integer.parseInt(loginJO.get("loginstatus").toString());
 
-
-
             Log.d(TAG, "main" + mainJO);
             Log.d(TAG, "login" + loginJO);
 
-            if (validate == 1) {
+            if (validate == 1) {    // has record in database
                 String fn,mn,ln,gender,email,addr,phno;
 
                 userJO = mainJO.getJSONObject("userInfo");
@@ -208,11 +199,9 @@ public class MainActivity extends AppCompatActivity {
 
 
                 validateLogin(username, validate, loginstatus);
-            } else {
+            } else {    // not an employee or wrong credentials
                 validateLogin(username, validate, loginstatus);
             }
-
-
 
 
         } catch (Exception e) {
@@ -226,13 +215,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (validate == 1 && loginstatus == 0) {
 
-            try {
-                saveLogData(getApplicationContext());
-                Log.d(TAG, "----- logging file -----");
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "ERROR");
-            }
 
             Intent homepage = new Intent(getApplicationContext(), NavigationActivity.class);
             homepage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
@@ -333,12 +315,5 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    public static void saveLogData(Context context) throws IOException {
-        String filename="logcat_"+System.currentTimeMillis()+".txt";
-        File opfile=new File(context.getExternalCacheDir(),filename);
-
-        @SuppressWarnings("unused")
-        Process process=Runtime.getRuntime().exec("logcat MainActivityTAG:V *:S -df "+opfile.getAbsolutePath());
-    }
 
 }

@@ -33,6 +33,9 @@
         <activity android:name=".ForgotPassword" />
         <activity android:name=".SettingsActivity"
             android:label="Settings" />
+
+        <service android:name=".BackgroundService" />
+
     </application>
 
 </manifest>

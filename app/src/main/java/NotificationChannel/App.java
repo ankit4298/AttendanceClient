@@ -8,6 +8,7 @@ import android.os.Build;
 public class App extends Application {
 
     public static final String CHANNEL_1="Attendance channel";
+    public static final String CHANNEL_2="Test channel";
 
     @Override
     public void onCreate() {
@@ -28,7 +29,7 @@ public class App extends Application {
 
 
             NotificationChannel outChannel=new NotificationChannel(
-                    CHANNEL_1,
+                    CHANNEL_2,
                     "test Channel",
                     NotificationManager.IMPORTANCE_DEFAULT
             );

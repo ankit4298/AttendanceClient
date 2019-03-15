@@ -23,7 +23,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
@@ -53,11 +52,11 @@ public class LocationFragment extends Fragment {
     TextView latText, longText, attendancePopText;
 
     LocationTrack locationTrack;
-    static boolean TRACK_ON = false;
 
     ProgressDialog progressDialog;
     RequestParams params = new RequestParams();
     RequestParams updateparams = new RequestParams();
+    RequestParams outparams = new RequestParams();
 
     // thread service
     ScheduledExecutorService getLocationServiceBackground;
@@ -129,7 +128,7 @@ public class LocationFragment extends Fragment {
                     double latitude = locationTrack.getLatitude();
                     double longitude = locationTrack.getLongitude();
 
-                    if (latitude == -1 && longitude == -1) {  // Failed
+                    if (latitude == 0.0 && longitude == 0.0) {  // Failed
                         Toast.makeText(getActivity(), "Retriving GPS signal failed", Toast.LENGTH_SHORT).show();
                     } else {    // Success
 
@@ -160,12 +159,8 @@ public class LocationFragment extends Fragment {
 
                             insertIntoServer();
 
-                        }
 
-                        boolean test5 = SaveAttendanceContext.getFirstAttendanceStatus(getContext());
-                        String test6 = SaveAttendanceContext.getMarkedFor(getContext());
-                        Log.d(TAG, Boolean.toString(test5));
-                        Log.d(TAG, test6);
+                        }
 
 
                         // Start Background Service
@@ -179,13 +174,24 @@ public class LocationFragment extends Fragment {
 
                                 if (geoFence.checkAgainstBounds(currLatitude, currLongitude)) { // in
 
+                                    Log.d(TAG, currLatitude + " " + currLongitude);
+
+                                    updateparams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
+                                    updateparams.put("latitude", Double.toString(currLatitude));
+                                    updateparams.put("longitude", Double.toString(currLongitude));
+
+                                    updateIntoServer();
+
+                                    Log.d(TAG, "updated in server");
+
+
+                                    /*
                                     if (currLatitude == lastLatitude && currLongitude == lastLongitude) {   // user at same place
-                                        // TODO : do not update into DB
+
                                         Log.d(TAG, "same place");
 
 
                                     } else {    // user moved
-                                        // TODO : update the DB
 
 
                                         lastLatitude = currLatitude;
@@ -195,13 +201,12 @@ public class LocationFragment extends Fragment {
                                         updateparams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
                                         updateparams.put("latitude", Double.toString(lastLatitude));
                                         updateparams.put("longitude", Double.toString(lastLongitude));
-                                        // TODO : send duration
 
                                         updateIntoServer();
 
                                         Log.d(TAG, "updated in server");
-
                                     }
+                                    */
 
                                 } else {    // out
 
@@ -209,7 +214,6 @@ public class LocationFragment extends Fragment {
 
                                     outStatus = SaveAttendanceContext.getOutStatus(getContext());
                                     Log.d(TAG, "outstatus: " + outStatus);
-
 
                                     Log.d(TAG, "out");
                                     Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
@@ -223,6 +227,15 @@ public class LocationFragment extends Fragment {
 
 
                                     outStatus += 1;
+
+                                    updateparams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
+                                    updateparams.put("latitude", Double.toString(currLatitude));
+                                    updateparams.put("longitude", Double.toString(currLongitude));
+
+                                    updateIntoServer();
+
+                                    Log.d(TAG, "updated in server for out");
+
                                     SaveAttendanceContext.updateOUTStatus(getContext(), outStatus);
                                     if (outStatus >= 3) {
                                         outStatus = 3;
@@ -252,8 +265,6 @@ public class LocationFragment extends Fragment {
             public void onClick(View v) {
 
                 // TODO : make alert box to prompt user to really mark OUTTIME
-                String markingDay = SaveAttendanceContext.getTodaysDay(getContext());
-                SaveAttendanceContext.setFirstAttendanceStatus(getContext(), false, markingDay);
 
                 stopLocBtn.setVisibility(View.INVISIBLE);
                 locBtn.setVisibility(View.VISIBLE);
@@ -265,10 +276,18 @@ public class LocationFragment extends Fragment {
 
                 // get outStatus and update to DB
                 Log.d(TAG, "outs :" + outStatus);
-                // TODO : mark outTime and outStatus in DB if clicked by user
+
+                outparams.put("eid",SaveSharedPreference.getUserInfo(getContext()));
+                outparams.put("latitude",Double.toString(locationTrack.getLatitude()));
+                outparams.put("longitude",Double.toString(locationTrack.getLongitude()));
+                outparams.put("outstatus",Integer.toString(SaveAttendanceContext.getOutStatus(getContext())));
+
+                markOutIntoServer();
 
                 // reset outStatus to 0
                 SaveAttendanceContext.updateOUTStatus(getContext(), 0);
+                String markingDay = SaveAttendanceContext.getTodaysDay(getContext());
+                SaveAttendanceContext.setFirstAttendanceStatus(getContext(), false, markingDay);
 
                 // Stopping loaction listener
                 locationTrack.stopListener();
@@ -279,15 +298,22 @@ public class LocationFragment extends Fragment {
 
     private void forceMarkOUT() {
 
-        String markingDay = SaveAttendanceContext.getTodaysDay(getContext());
-        SaveAttendanceContext.setFirstAttendanceStatus(getContext(), false, markingDay);
-
-//        stopLocBtn.setVisibility(View.INVISIBLE);
-//        locBtn.setVisibility(View.VISIBLE);
-//        attendancePopText.setText("Attendance Tracking Stopped");
-
         future.cancel(true);
         Log.d(TAG, "stopped by force");
+
+        Log.d(TAG, "outs :" + outStatus);
+
+        outparams.put("eid",SaveSharedPreference.getUserInfo(getContext()));
+        outparams.put("latitude",Double.toString(locationTrack.getLatitude()));
+        outparams.put("longitude",Double.toString(locationTrack.getLongitude()));
+        outparams.put("outstatus",Integer.toString(SaveAttendanceContext.getOutStatus(getContext())));
+
+        markOutIntoServer();
+
+        // reset outStatus to 0
+        SaveAttendanceContext.updateOUTStatus(getContext(), 0);
+        String markingDay = SaveAttendanceContext.getTodaysDay(getContext());
+        SaveAttendanceContext.setFirstAttendanceStatus(getContext(), false, markingDay);
 
         locationTrack.stopListener();
 
@@ -378,7 +404,7 @@ public class LocationFragment extends Fragment {
                 progressDialog.hide();
 
 
-                Log.d(TAG, " successfully marked ");
+                Log.d(TAG, " successfully inserted ");
                 processJSONResponseInsert(response);
 
             }
@@ -411,8 +437,40 @@ public class LocationFragment extends Fragment {
             public void onSuccess(String response) {
 
 
-                Log.d(TAG, " successfully marked ");
+                Log.d(TAG, " successfully updated ");
                 processJSONResponseUpdate(response);
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Throwable error, String content) {
+                progressDialog.hide();
+
+                if (statusCode == 404) {
+                    Toast.makeText(getContext(), "404 error", Toast.LENGTH_SHORT).show();
+                } else if (statusCode == 500) {
+                    Toast.makeText(getContext(), "server side error", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Heavy Error", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+
+
+        });
+
+    }
+
+    public void markOutIntoServer() {
+        AsyncHttpClient client = new AsyncHttpClient();
+        String url = SaveSharedPreference.getServerURL(getContext()) + "/MarkingOutAttendance";
+        client.post(url, outparams, new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(String response) {
+
+                Log.d(TAG, " successfully marked out ");
+                processJSONResponseMarkingOut(response);
 
             }
 
@@ -463,6 +521,30 @@ public class LocationFragment extends Fragment {
 
             if (1 != Integer.parseInt(serverResponse)) {
                 setUserOutNotification();
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    private void processJSONResponseMarkingOut(String response) {
+
+        String serverResponse;
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+
+            serverResponse = jsonObject.get("response").toString();
+
+
+            Log.d(TAG, "processJSONResponseMarkingOut: "+serverResponse);
+
+
+            if (1 == Integer.parseInt(serverResponse)) {
+                Toast.makeText(getContext(), "User Marked Out Successfully !", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "processJSONResponseMarkingOut: SUCCESS");
+            }else{
+                Toast.makeText(getContext(), "SOME ERROR", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "processJSONResponseMarkingOut: ERROR");
             }
         } catch (Exception e) {
 

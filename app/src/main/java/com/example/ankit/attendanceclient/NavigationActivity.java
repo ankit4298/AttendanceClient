@@ -19,11 +19,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import Logs.LogHandler;
 import SessionHandler.SaveSharedPreference;
+import SessionHandler.SaveUserDetails;
 
 public class NavigationActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -35,12 +40,14 @@ public class NavigationActivity extends AppCompatActivity
 
 
 
-    TextView navUsernameText;
+    TextView navUsernameText,navEmailText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
+
+//        LogHandler logs=new LogHandler();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -57,10 +64,16 @@ public class NavigationActivity extends AppCompatActivity
 
 
         // get nav_header_navigation.xml header view for accessing their elements
-        String eid = SaveSharedPreference.getUserInfo(getApplicationContext());
         View headerView = navigationView.getHeaderView(0);
+
         navUsernameText = headerView.findViewById(R.id.navUsernameText);
-        navUsernameText.setText(eid);
+        navUsernameText.setText(SaveSharedPreference.getUserInfo(getApplicationContext()));
+
+        navEmailText = headerView.findViewById(R.id.navEmailText);
+        navEmailText.setText(SaveUserDetails.getEmail(getApplicationContext()));
+
+
+
 
 
         FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
@@ -118,6 +131,12 @@ public class NavigationActivity extends AppCompatActivity
             case R.id.homepage_item:
                 fragment = new HomepageFragment();
                 break;
+            case R.id.settings_item:
+
+                Intent settings=new Intent(getApplicationContext(),SettingsActivity.class);
+                startActivity(settings);
+
+                break;
             default:
                 fragment = new LocationFragment();
                 break;
@@ -160,6 +179,7 @@ public class NavigationActivity extends AppCompatActivity
     private void logout() {
 
         SaveSharedPreference.setLoggedInStatus(getApplicationContext(), false, "loggedout_user");
+        SaveUserDetails.setUserDetails(getApplicationContext(),null,null,null,null,null,null,null);
 
         Intent logout = new Intent(NavigationActivity.this, MainActivity.class);
         logout.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -172,28 +192,5 @@ public class NavigationActivity extends AppCompatActivity
         getSupportActionBar().setTitle(title);
     }
 
-
-
-
-    public static void serviceInNav(boolean runThread) {
-        RUN_THREAD = runThread;
-        ScheduledExecutorService getLocationServiceBackground=null;
-        // to restart thread
-        ScheduledFuture<?> future;
-        if (RUN_THREAD) {
-            // start background service
-            future=getLocationServiceBackground.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-
-                    Log.d(TAG, "inside run");
-
-                }
-            },1,3,TimeUnit.SECONDS);
-
-        } else {
-            // dont
-        }
-    }
 
 }

@@ -92,7 +92,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
             <TextView
-                android:id="@+id/textView9"
+                android:id="@+id/nameText"
                 android:layout_width="314dp"
                 android:layout_height="42dp"
                 android:layout_marginTop="7dp"
@@ -110,7 +110,7 @@
                 android:layout_marginTop="20dp"
                 android:text="Email"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView9" />
+                app:layout_constraintTop_toBottomOf="@+id/nameText" />
 
             <EditText
                 android:id="@+id/emailText"
@@ -128,7 +128,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/textView10" />
 
             <EditText
-                android:id="@+id/editText3"
+                android:id="@+id/oldPassText"
                 android:layout_width="316dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
@@ -140,7 +140,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/textView13" />
 
             <EditText
-                android:id="@+id/editText4"
+                android:id="@+id/newPassText"
                 android:layout_width="316dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
@@ -168,10 +168,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="New Password"
-                app:layout_constraintEnd_toEndOf="@+id/editText3"
+                app:layout_constraintEnd_toEndOf="@+id/oldPassText"
                 app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="@+id/editText3"
-                app:layout_constraintTop_toBottomOf="@+id/editText3" />
+                app:layout_constraintStart_toStartOf="@+id/oldPassText"
+                app:layout_constraintTop_toBottomOf="@+id/oldPassText" />
 
             <TextView
                 android:id="@+id/textView15"
@@ -179,13 +179,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="Confirm Password"
-                app:layout_constraintEnd_toEndOf="@+id/editText4"
+                app:layout_constraintEnd_toEndOf="@+id/newPassText"
                 app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="@+id/editText4"
-                app:layout_constraintTop_toBottomOf="@+id/editText4" />
+                app:layout_constraintStart_toStartOf="@+id/newPassText"
+                app:layout_constraintTop_toBottomOf="@+id/newPassText" />
 
             <EditText
-                android:id="@+id/editText5"
+                android:id="@+id/confirmPassText"
                 android:layout_width="316dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
@@ -207,7 +207,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/editText5" />
+                app:layout_constraintTop_toBottomOf="@+id/confirmPassText" />
 
             <View
                 android:id="@+id/divider"
@@ -217,7 +217,7 @@
                 android:layout_marginTop="25dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="25dp"
-                android:background="?android:attr/listDivider"
+                android:background="@color/colorPrimary"
                 android:visibility="visible"
                 app:layout_constraintBottom_toTopOf="@+id/textView12"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -232,7 +232,7 @@
                 android:layout_marginTop="25dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="25dp"
-                android:background="?android:attr/listDivider"
+                android:background="@color/colorPrimary"
                 app:layout_constraintBottom_toTopOf="@+id/textView8"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

@@ -2,6 +2,7 @@ package com.example.ankit.attendanceclient;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,15 +23,22 @@ import com.loopj.android.http.RequestParams;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import SessionHandler.SaveSharedPreference;
+import SessionHandler.SaveUserDetails;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final String TAG = "MainActivityTAG";
 
     // permission vars
     private ArrayList<String> permissionsToRequest;
@@ -53,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
         // Ask for permission
         permissions.add(ACCESS_FINE_LOCATION);
         permissions.add(ACCESS_COARSE_LOCATION);
+        permissions.add(READ_EXTERNAL_STORAGE);
+        permissions.add(WRITE_EXTERNAL_STORAGE);
 
         permissionsToRequest = findUnAskedPermissions(permissions);
         //get the permissions we have asked for before but are not granted..
@@ -81,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(homepage);
             finish();
         } else {
-            Log.d("testhere", "here");
+            Log.d(TAG, "here");
         }
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
@@ -108,6 +118,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        try {
+            saveLogData(getApplicationContext());
+            Log.d(TAG, "DONE");
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "ERROR");
+        }
 
 
     } // end onCreate
@@ -155,18 +173,50 @@ public class MainActivity extends AppCompatActivity {
         String username;
 
         try {
-            JSONObject jsonObject = new JSONObject(response);
 
-            username = jsonObject.get("username").toString();
-            validate = Integer.parseInt(jsonObject.get("loginverified").toString());
-            loginstatus = Integer.parseInt(jsonObject.get("loginstatus").toString());
+            JSONObject mainJO = new JSONObject(response);
+            JSONObject loginJO = mainJO.getJSONObject("loginInfo");
+            JSONObject userJO = null;
 
-            Log.d("testtest", username + "\t" + validate + "\t" + loginstatus);
+            username = loginJO.get("username").toString();
+            validate = Integer.parseInt(loginJO.get("loginverified").toString());
+            loginstatus = Integer.parseInt(loginJO.get("loginstatus").toString());
 
-            validateLogin(username, validate, loginstatus);
+
+
+            Log.d(TAG, "main" + mainJO);
+            Log.d(TAG, "login" + loginJO);
+
+            if (validate == 1) {
+                String fn,mn,ln,gender,email,addr,phno;
+
+                userJO = mainJO.getJSONObject("userInfo");
+                Log.d(TAG, "user" + userJO);
+
+                fn=userJO.get("firstname").toString();
+                mn=userJO.get("middlename").toString();
+                ln=userJO.get("lastname").toString();
+                gender=userJO.get("gender").toString();
+                email=userJO.get("email").toString();
+                addr=userJO.get("address").toString();
+                phno=userJO.get("phno").toString();
+
+//                Log.d(TAG, "\n\nfirstname: "+fn);
+
+
+                SaveUserDetails.setUserDetails(getApplicationContext(),fn,mn,ln,gender,email,addr,phno);
+
+
+                validateLogin(username, validate, loginstatus);
+            } else {
+                validateLogin(username, validate, loginstatus);
+            }
+
+
+
 
         } catch (Exception e) {
-            Log.d("json exception", "json exception");
+            Log.d(TAG, "json exception" + e);
         }
 
     }
@@ -175,6 +225,14 @@ public class MainActivity extends AppCompatActivity {
     public void validateLogin(String username, int validate, int loginstatus) {
 
         if (validate == 1 && loginstatus == 0) {
+
+            try {
+                saveLogData(getApplicationContext());
+                Log.d(TAG, "----- logging file -----");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "ERROR");
+            }
 
             Intent homepage = new Intent(getApplicationContext(), NavigationActivity.class);
             homepage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
@@ -273,6 +331,14 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("Cancel", null)
                 .create()
                 .show();
+    }
+
+    public static void saveLogData(Context context) throws IOException {
+        String filename="logcat_"+System.currentTimeMillis()+".txt";
+        File opfile=new File(context.getExternalCacheDir(),filename);
+
+        @SuppressWarnings("unused")
+        Process process=Runtime.getRuntime().exec("logcat MainActivityTAG:V *:S -df "+opfile.getAbsolutePath());
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.ankit.attendanceclient;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -7,20 +8,22 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import SessionHandler.SaveSharedPreference;
+import SessionHandler.SaveUserDetails;
 
 
 public class ProfileFragment extends Fragment {
 
 
-    TextView eidText;
+    TextView eidText, nameText;
+    EditText emailText;
 
     public ProfileFragment() {
         // Required empty public constructor
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -30,13 +33,22 @@ public class ProfileFragment extends Fragment {
         ((NavigationActivity) getActivity()).setActionBarTitle("Profile");
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        eidText=view.findViewById(R.id.eidText);
-        String eid=SaveSharedPreference.getUserInfo(getContext());
-        eidText.setText(eid);
+        Context context = getContext();
+
+        eidText = view.findViewById(R.id.eidText);
+        eidText.setText(SaveSharedPreference.getUserInfo(context));
+
+        nameText = view.findViewById(R.id.nameText);
+        String fullName = SaveUserDetails.getFirstName(context) + " " + SaveUserDetails.getMiddleName(context) + " " + SaveUserDetails.getLastName(context);
+        nameText.setText(fullName);
+
+        emailText = view.findViewById(R.id.emailText);
+        emailText.setText(SaveUserDetails.getEmail(context));
 
 
     }

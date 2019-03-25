@@ -13,20 +13,11 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import Logs.LogHandler;
 import SessionHandler.SaveSharedPreference;
 import SessionHandler.SaveUserDetails;
 
@@ -119,17 +110,17 @@ public class NavigationActivity extends AppCompatActivity
         int id = item.getItemId();
 
         switch (id) {
-//            case R.id.location_item:
-//                fragment = new LocationFragment();
-//                break;
+            case R.id.location_item:
+                fragment = new LocationFragment();
+                break;
+            case R.id.remote_item:
+                fragment=new RemoteLocationFragment();
+                break;
             case R.id.profile_item:
                 fragment = new ProfileFragment();
                 break;
             case R.id.logout_item:
                 logoutBox();
-                break;
-            case R.id.homepage_item:
-                fragment = new HomepageFragment();
                 break;
             case R.id.settings_item:
 

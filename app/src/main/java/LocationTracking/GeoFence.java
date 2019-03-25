@@ -1,49 +1,73 @@
 package LocationTracking;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.maps.android.PolyUtil;
+import com.google.maps.android.SphericalUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GeoFence {
 
-    // test coords
-    double lat = 20.014316;
-    double lng = 73.764120;
-    LatLng IN_testCoords = new LatLng(20.014325, 73.763782);
-    LatLng OUT_testCoords = new LatLng(20.015979, 73.760338);
-    // ------
-
     // polygon coordinates
     final List<LatLng> poly = new ArrayList<>();
     LatLngBounds bounds;
 
-    //test home coords
-    //20.005409, 73.801264      TL
-    //20.005418, 73.801585
-    //20.005195, 73.801595
-    //20.005138, 73.801307      BL
 
-    public GeoFence(){
+    public GeoFence() {
         // POLYGON Bounds - (GEOFence)
-        poly.add(new LatLng(20.014919, 73.762501)); // 1    Top Left
-        poly.add(new LatLng(20.015005, 73.764832)); // 2    TR
-        poly.add(new LatLng(20.013648, 73.764525)); // 3    BR
-        poly.add(new LatLng(20.013790, 73.762158)); // 4    BL
-        bounds = new LatLngBounds(poly.get(3), poly.get(1));
+        poly.add(new LatLng(20.015367, 73.763616)); // 3    TL
+        poly.add(new LatLng(20.015311, 73.764276)); // 4    TR
+        poly.add(new LatLng(20.014469, 73.764178)); // 5
+        poly.add(new LatLng(20.014343, 73.764696)); // 6
+        poly.add(new LatLng(20.013637, 73.764554)); // 1    BR
+        poly.add(new LatLng(20.013684, 73.763493)); // 2    BL
+
+        bounds = new LatLngBounds(poly.get(5), poly.get(1));    // a/c to TL,BR
+//        bounds = new LatLngBounds(poly.get(4), poly.get(6));    // a/c to NorthEast / SouthWest
     }
 
 
     // overloaded methods for checking in out
-    public boolean checkAgainstBounds(double lat,double lng){
-        boolean inout = PolyUtil.containsLocation(lat,lng, poly, true);
+    public boolean checkAgainstBounds(double lat, double lng) {
+        boolean inout = PolyUtil.containsLocation(lat, lng, poly, true);
         return inout;
     }
-    public boolean checkAgainstBounds(LatLng coords){
+
+    public boolean checkAgainstBounds(LatLng coords) {
         boolean inout = PolyUtil.containsLocation(coords, poly, true);
         return inout;
+    }
+
+    public boolean isWithinCircle(double center_lat, double center_lng, double lat, double lng, double radius) {
+
+        LatLng center_latlng = new LatLng(center_lat, center_lng);
+        LatLng latlng = new LatLng(lat, lng);
+
+        double distance = SphericalUtil.computeDistanceBetween(center_latlng, latlng);
+
+        if (distance < radius) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    public boolean isWithinCircle(LatLng center_latlng, double currLat, double currLng, double radius) {
+
+        LatLng latlng = new LatLng(currLat, currLng);
+
+        double distance = SphericalUtil.computeDistanceBetween(center_latlng, latlng);
+
+        if (distance < radius) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

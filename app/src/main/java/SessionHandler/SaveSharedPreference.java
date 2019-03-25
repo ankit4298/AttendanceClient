@@ -10,7 +10,7 @@ import static SessionHandler.PreferenceUtility.USERNAME;
 
 public class SaveSharedPreference {
 
-    public static final String SERVER_URL="http://jws-app-appserver.7e14.starter-us-west-2.openshiftapps.com";
+    public static final String SERVER_URL="http://jws-app-appserver.1d35.starter-us-east-1.openshiftapps.com";
 
     static SharedPreferences getPreferences(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context);

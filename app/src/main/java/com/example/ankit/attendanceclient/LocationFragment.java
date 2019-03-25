@@ -47,7 +47,6 @@ public class LocationFragment extends Fragment {
 
     ProgressDialog progressDialog;
     RequestParams insertParams = new RequestParams();
-    RequestParams outparams = new RequestParams();
 
 
     public LocationFragment() {
@@ -96,8 +95,6 @@ public class LocationFragment extends Fragment {
         locBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                NavigationActivity nava=new NavigationActivity();
-//                nava.serviceInNav(true);
 
 
                 // TODO : check if todays day and marking day --- if same (user already marked) else (USER MARKS)
@@ -106,6 +103,8 @@ public class LocationFragment extends Fragment {
 //                    Log.d(TAG, "user already marked");
 //                    return;
 //                }
+
+                SaveAttendanceContext.updateOUTStatus(getContext(),0);
 
                 locationTrack = new LocationTrack(getContext());
 
@@ -134,16 +133,26 @@ public class LocationFragment extends Fragment {
 
                         } else { // mark first attendance (insert query)
 
-                            // mark first attendance
-                            SaveAttendanceContext.setFirstAttendanceStatus(getContext(), true, markingDay);
-                            // TODO : check in out and then mark into DB
+                            if (geoFence.checkAgainstBounds(latitude, longitude)) {
+                                // mark first attendance
+                                SaveAttendanceContext.setFirstAttendanceStatus(getContext(), true, markingDay);
+                                // TODO : check in out and then mark into DB
 
-                            Log.d(TAG, "marking first attendance");
-                            insertParams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
-                            insertParams.put("latitude", Double.toString(latitude));
-                            insertParams.put("longitude", Double.toString(longitude));
+                                Log.d(TAG, "marking first attendance");
+                                insertParams.put("eid", SaveSharedPreference.getUserInfo(getContext()));
+                                insertParams.put("latitude", Double.toString(latitude));
+                                insertParams.put("longitude", Double.toString(longitude));
 
-                            insertIntoServer();
+                                insertIntoServer();
+                            } else {
+                                Toast.makeText(getContext(),"Not inside the Company !",Toast.LENGTH_LONG).show();
+                                locBtn.setVisibility(View.VISIBLE);
+                                stopLocBtn.setVisibility(View.INVISIBLE);
+                                attendancePopText.setText(attendancePopTextStopped);
+                                locationTrack.stopListener();
+
+                                return;
+                            }
 
 
                         }

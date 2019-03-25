@@ -18,8 +18,7 @@ import SessionHandler.SaveUserDetails;
 public class ProfileFragment extends Fragment {
 
 
-    TextView eidText, nameText;
-    EditText emailText;
+    TextView eidText, nameText, emailText, phnoText, addressText;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -50,6 +49,11 @@ public class ProfileFragment extends Fragment {
         emailText = view.findViewById(R.id.emailText);
         emailText.setText(SaveUserDetails.getEmail(context));
 
+        phnoText=view.findViewById(R.id.phnoText);
+        phnoText.setText(SaveUserDetails.getPhno(getContext()));
+
+        addressText=view.findViewById(R.id.addressText);
+        addressText.setText(SaveUserDetails.getAddress(getContext()));
 
     }
 }

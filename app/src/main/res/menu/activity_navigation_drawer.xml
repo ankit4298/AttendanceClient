@@ -5,11 +5,11 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/homepage_item"
-            android:title="Homepage" />
-        <item
             android:id="@+id/location_item"
-            android:title="Location" />
+            android:title="Attendance" />
+        <item
+            android:id="@+id/remote_item"
+            android:title="Remote Attendance" />
         <item
             android:id="@+id/profile_item"
             android:title="Profile" />
@@ -20,7 +20,8 @@
             <item
                 android:id="@+id/settings_item"
                 android:icon="@drawable/ic_menu_manage"
-                android:title="Settings" />
+                android:title="Settings"
+                android:visible="false" />
             <item
                 android:id="@+id/logout_item"
                 android:icon="@drawable/ic_menu_send"

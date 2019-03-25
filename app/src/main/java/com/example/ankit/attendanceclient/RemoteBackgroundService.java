@@ -16,14 +16,13 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -37,14 +36,12 @@ import SessionHandler.SaveSharedPreference;
 import static NotificationChannel.App.CHANNEL_1;
 import static NotificationChannel.App.CHANNEL_2;
 
-// SERVICE FOR ON-PREMISE ATTENDANCE
+public class RemoteBackgroundService extends Service {
 
-public class BackgroundService extends Service {
-
-    public static final String TAG = "LocationFragment";
-    static final int MY_ID = 1991;
+    public static final String TAG = "remotefragment";
+    static final int MY_ID = 1992;
     static final String EXTRA_KEY = "STOPKEY";
-    static final int EXTRA_VALUE = 1991;
+    static final int EXTRA_VALUE = 1992;
 
 
     ProgressDialog progressDialog;
@@ -55,6 +52,8 @@ public class BackgroundService extends Service {
     GeoFence geoFence;
     double currLatitude = 0.0;
     double currLongitude = 0.0;
+    LatLng centerCoords;
+    double radius=0.0;
     int outStatus;
 
     // thread service
@@ -78,11 +77,26 @@ public class BackgroundService extends Service {
 
         // executor service to work in background with only one thread
         getLocationServiceBackground = Executors.newSingleThreadScheduledExecutor();
+
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+//        double lat=Double.parseDouble(SaveRemoteAttendanceContext.getCenterLat(getApplicationContext()));
+//        double lng=Double.parseDouble(SaveRemoteAttendanceContext.getCenterLng(getApplicationContext()));
+//        double rad=Double.parseDouble(SaveRemoteAttendanceContext.getRadius(getApplicationContext()));
+
+        double lat=intent.getDoubleExtra("centerLat",0.0);
+        double lng=intent.getDoubleExtra("centerLng",0.0);
+        double rad=intent.getDoubleExtra("radius",0.0);
+        centerCoords = new LatLng(lat, lng);
+        radius=rad;
+
+
+        //TODO: culprit here displaying wrong coords
+        Log.d(TAG, lat+" "+lng+" "+rad+"latlng rad: "+centerCoords+" "+radius);
 
         // init locationTrack object
         locationTrack = new LocationTrack(getApplicationContext());
@@ -116,7 +130,7 @@ public class BackgroundService extends Service {
                 0, notificationIntent, 0);
 
         // for stop button on notification
-        Intent iStopSelf = new Intent(this, BackgroundService.class);
+        Intent iStopSelf = new Intent(this, RemoteBackgroundService.class);
         iStopSelf.putExtra(EXTRA_KEY, EXTRA_VALUE);
         PendingIntent pStopSelf = PendingIntent.getService(this,
                 0, iStopSelf, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -124,8 +138,8 @@ public class BackgroundService extends Service {
         // create Notification
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_2)
                 .setContentTitle("Attendance Tracking")
-                .setContentText("Your Attendance Tracking Started")
-                .addAction(R.drawable.inout_ico, "Stop Service", pStopSelf)
+                .setContentText("On-Site Attendance Tracking Started")
+//                .addAction(R.drawable.inout_ico, "Stop Service", pStopSelf)
                 .setSmallIcon(R.drawable.attendance_ico)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -152,7 +166,7 @@ public class BackgroundService extends Service {
 
                     Log.d(TAG, currLatitude + " " + currLongitude);
 
-                    if (geoFence.checkAgainstBounds(currLatitude, currLongitude)) { // in
+                    if (geoFence.isWithinCircle(centerCoords,currLatitude,currLongitude,radius)) { // in
 
                         updateparams.put("eid", SaveSharedPreference.getUserInfo(getApplicationContext()));
                         updateparams.put("latitude", Double.toString(currLatitude));
@@ -190,12 +204,11 @@ public class BackgroundService extends Service {
 
                         updateIntoServer();
 
-                        Log.d(TAG, "updated in server for outstatus");
+                        Log.d(TAG, "updated in server for out");
 
                         SaveAttendanceContext.updateOUTStatus(getApplicationContext(), outStatus);
                         if (outStatus > 3) {
                             outStatus = 3;
-                            Log.d(TAG, "FORCE OUT");
                             forceMarkOUT();
                         }
                     }
@@ -244,7 +257,7 @@ public class BackgroundService extends Service {
 
         markOutIntoServer();
 
-        Intent stopService = new Intent(getApplicationContext(), BackgroundService.class);
+        Intent stopService = new Intent(getApplicationContext(), RemoteBackgroundService.class);
         getApplicationContext().stopService(stopService);
 
         // reset outStatus to 0
@@ -268,7 +281,7 @@ public class BackgroundService extends Service {
 
             Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_1)
                     .setContentTitle("Attendance Tracking System")
-                    .setContentText("You are out of company's premises!")
+                    .setContentText("You are out of site's location!")
                     .setAutoCancel(false)
                     .setSmallIcon(R.drawable.ic_warning_black_24dp)
                     .setContentIntent(pendingIntent)
@@ -296,7 +309,7 @@ public class BackgroundService extends Service {
 
     public void updateIntoServer() {
         AsyncHttpClient client = new AsyncHttpClient();
-        String url = SaveSharedPreference.getServerURL(getApplicationContext()) + "/UpdateAttendance";
+        String url = SaveSharedPreference.getServerURL(getApplicationContext()) + "/UpdateRemoteAttendance";
         client.post(url, updateparams, new AsyncHttpResponseHandler() {
 
             @Override
@@ -330,7 +343,7 @@ public class BackgroundService extends Service {
     public void markOutIntoServer() {
 
         AsyncHttpClient client = new AsyncHttpClient();
-        String url = SaveSharedPreference.getServerURL(getApplicationContext()) + "/MarkingOutAttendance";
+        String url = SaveSharedPreference.getServerURL(getApplicationContext()) + "/MarkOutRemoteAttendance";
         client.post(url, outparams, new AsyncHttpResponseHandler() {
 
             @Override
@@ -368,7 +381,7 @@ public class BackgroundService extends Service {
 
             serverResponse = jsonObject.get("response").toString();
 
-            if (1 != Integer.parseInt(serverResponse)) {
+            if (0 == Integer.parseInt(serverResponse)) {
                 setUserOutNotification();
             }
         } catch (Exception e) {
@@ -384,7 +397,6 @@ public class BackgroundService extends Service {
 
             serverResponse = jsonObject.get("response").toString();
 
-
             Log.d(TAG, "processJSONResponseMarkingOut: " + serverResponse);
 
 
@@ -398,15 +410,6 @@ public class BackgroundService extends Service {
         } catch (Exception e) {
 
         }
-    }
-
-
-    public static void saveLogData(Context context) throws IOException {
-        String filename = "logcat_" + System.currentTimeMillis() + ".txt";
-        File opfile = new File(context.getExternalCacheDir(), filename);
-
-        @SuppressWarnings("unused")
-        Process process = Runtime.getRuntime().exec("logcat BackgroundService:V *:S -df " + opfile.getAbsolutePath());
     }
 
 }

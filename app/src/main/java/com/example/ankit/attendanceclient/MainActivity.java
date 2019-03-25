@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         userText = findViewById(R.id.userText);
         passText = findViewById(R.id.passText);
         forgotPassText = findViewById(R.id.forgotPassText);
+        forgotPassText.setVisibility(View.INVISIBLE);
 
         // Check if user is already logged in
         if (SaveSharedPreference.getLoggedStatus(getApplicationContext())) {
